@@ -11,6 +11,11 @@ namespace MIKRI\ChartMgr;
 class StackedBarChartMgr
 {
     /**
+     * Массив размера поля графика
+     */
+    private $graphArea;
+
+    /**
      * Массив значений оси X
      * 
      * @var array
@@ -36,6 +41,7 @@ class StackedBarChartMgr
      */
     public function __construct()
     {
+        $this->graphArea = array(0, 0, 0, 0);
         $this->graphXVals = array();
         $this->graphYVals = array();
         $this->errorMsg = "";
@@ -49,6 +55,30 @@ class StackedBarChartMgr
     public function getLastError()
     {
         return $this->errorMsg;
+    }
+
+    /**
+     * Задать размеры области графика в пикселях
+     * 
+     * @param int $width  Ширина области графика
+     * @param int $height Высота области графика
+     * 
+     * @return void
+     */
+    public function setGraphArea($width, $height)
+    {
+        $this->graphArea[2] = intval($width);
+        $this->graphArea[3] = intval($height);
+    }
+
+    /**
+     * Получить размеры области графика в пикселях
+     * 
+     * @return array
+     */
+    public function getGraphArea()
+    {
+        return $this->graphArea;
     }
 
     /**
