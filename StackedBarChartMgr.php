@@ -84,7 +84,7 @@ class StackedBarChartMgr
     /**
      * Передача значений оси X на график
      * 
-     * @param $xValuesArray Массив значений оси X
+     * @param array $xValuesArray Массив значений оси X
      * 
      * @return bool
      */
