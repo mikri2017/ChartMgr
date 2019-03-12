@@ -344,21 +344,54 @@ class StackedBarChartMgr
         //exit(0);
 
         foreach ($this->graphXVals as $key => $value) {
-            $rectColor = ImageColorAllocate(
-                $handle,
-                $this->graphYVals[0]['color'][0],
-                $this->graphYVals[0]['color'][1],
-                $this->graphYVals[0]['color'][2]
-            );
+            $arrayOnX = array();
+            $arrayUnderX = array();
+            for ($i = 0; $i < count($this->graphYVals); $i++) {
+                if ($this->graphYVals[$i]['values_px'][$key] >= $this->pxXCoordOnY) {
+                    $arrayOnX[$i] = $this->graphYVals[$i]['values_px'][$key];
+                } else {
+                    $arrayUnderX[$i] = $this->graphYVals[$i]['values_px'][$key];
+                }
+            }
 
-            imagefilledrectangle(
-                $handle,
-                $this->pxOneOnX * $key,
-                $this->graphYVals[0]['values_px'][$key],
-                $this->pxOneOnX * ($key + 1),
-                $this->pxXCoordOnY,
-                $rectColor
-            );
+            arsort($arrayOnX);
+            asort($arrayUnderX);
+
+            foreach ($arrayOnX as $i => $value) {
+                $rectColor = ImageColorAllocate(
+                    $handle,
+                    $this->graphYVals[$i]['color'][0],
+                    $this->graphYVals[$i]['color'][1],
+                    $this->graphYVals[$i]['color'][2]
+                );
+
+                imagefilledrectangle(
+                    $handle,
+                    $this->pxOneOnX * $key,
+                    $this->graphYVals[$i]['values_px'][$key],
+                    $this->pxOneOnX * ($key + 1),
+                    $this->pxXCoordOnY,
+                    $rectColor
+                );
+            }
+
+            foreach ($arrayUnderX as $i => $value) {
+                $rectColor = ImageColorAllocate(
+                    $handle,
+                    $this->graphYVals[$i]['color'][0],
+                    $this->graphYVals[$i]['color'][1],
+                    $this->graphYVals[$i]['color'][2]
+                );
+
+                imagefilledrectangle(
+                    $handle,
+                    $this->pxOneOnX * $key,
+                    $this->graphYVals[$i]['values_px'][$key],
+                    $this->pxOneOnX * ($key + 1),
+                    $this->pxXCoordOnY,
+                    $rectColor
+                );
+            }
         }
 
         $xCoordColor = ImageColorAllocate($handle, 0, 0, 0);
