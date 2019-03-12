@@ -77,6 +77,13 @@ class StackedBarChartMgr
     private $pxXCoordOnY;
 
     /**
+     * Менеджер шрифтов и вывода текста на график
+     * 
+     * @var FontGDDrawMgr
+     */
+    private $fontMgr;
+
+    /**
      * Текст последней ошибки
      */
     private $errorMsg;
@@ -98,6 +105,7 @@ class StackedBarChartMgr
         $this->pxOneOnX = 0;
         $this->pxOneOnY = 0;
         $this->pxXCoordOnY = 0;
+        $this->fontMgr = new FontGDDrawMgr();
         $this->errorMsg = "";
     }
 
@@ -198,6 +206,87 @@ class StackedBarChartMgr
             foreach ($yVals['values'] as $key => $yVal) {
                 $yVals['values_px'][$key] = $this->pxXCoordOnY - ($yVal * $this->pxOneOnY);
             }
+        }
+    }
+
+    /**
+     * Рисует блок данных на графике по переданным координатам
+     * 
+     * @param resource $handle Ресурс изображения от библиотеки GD
+     * @param array    $color
+     * @param int      $darkColorDelta
+     * @param array    $blockArea
+     * 
+     * @return bool
+     */
+    private function _drawGraphDataBlock($handle, $color, $darkColorDelta, $blockArea)
+    {
+        // Задаем цвет блока и рисуем его
+        $rectColor = \imagecolorallocate($handle, $color[0], $color[1], $color[2]);
+
+        \imagefilledrectangle(
+            $handle,
+            $blockArea[0],
+            $blockArea[1],
+            $blockArea[2],
+            $blockArea[3],
+            $rectColor
+        );
+
+        // Задаем цвет рамки графика и рисуем ее
+        foreach ($color as &$colorEl) {
+            $colorEl -= $darkColorDelta;
+            if ($colorEl < 0) {
+                $colorEl = 0;
+            }
+        }
+
+        $rectFrColor = \imagecolorallocate($handle, $color[0], $color[1], $color[2]);
+
+        \imagerectangle(
+            $handle,
+            $blockArea[0],
+            $blockArea[1],
+            $blockArea[2],
+            $blockArea[3],
+            $rectFrColor
+        );
+
+        return true;
+    }
+
+    /**
+     * Отрисовываем легенду на графике
+     * 
+     * @param resource $handle Ресурс изображения от библиотеки GD
+     * 
+     * @return void
+     */
+    private function _drawLegend($handle)
+    {
+        $strHeight = 20;
+        $blockSize = 10;
+        $darkColorDelta = 70;
+        $i = 0;
+        foreach ($this->graphYVals as $yVals) {
+            $blockArea = array(
+                $this->graphLegendArea[0],
+                $this->graphLegendArea[1] + $i * $strHeight,
+                $this->graphLegendArea[0] + $blockSize,
+                $this->graphLegendArea[1] + $i * $strHeight + $blockSize
+            );
+
+            $this->_drawGraphDataBlock($handle, $yVals['color'], $darkColorDelta, $blockArea);
+
+            $this->fontMgr->setFontParams(8, $yVals['color']);
+            $this->fontMgr->drawText(
+                $handle,
+                $this->graphLegendArea[0] + $blockSize + 5,
+                $this->graphLegendArea[1] + $i * $strHeight + $blockSize,
+                $yVals['caption']
+            );
+
+            $i++;
         }
     }
 
@@ -384,29 +473,34 @@ class StackedBarChartMgr
      *                         по умолчанию, false
      * @param string $filePath Путь к файлу, в который сохранить график
      * 
-     * @return void
+     * @return bool
      */
     public function draw($inFile = false, $filePath = "")
     {
         $this->_calcYValuesInPx();
 
-        header("Content-type: image/png");
-
-        $handle = ImageCreate(
+        $handle = \imagecreate(
             $this->graphAreaWithLegend[2],
             $this->graphAreaWithLegend[3]
         );
 
         if ($handle === false) {
-            die("Cannot Create image");
+            $errorInf = error_get_last();
+            $this->errorMsg = "Ошибка при создании изображения: ("
+                    . $errorInf['type'] . ") " . $errorInf['message']
+                    . " в файле " . $errorInf['file'] . " строка "
+                    . $errorInf['line'];
+            return false;
         }
 
-        $bgColor = ImageColorAllocate($handle, 255, 255, 255);
+        $this->fontMgr->setFontFilePath("verdana.ttf");
+
+        $bgColor = \imagecolorallocate($handle, 255, 255, 255);
         $darkColorDelta = 70;
 
         // Рисуем рамку графика
-        $frameGraphColor = ImageColorAllocate($handle, 0, 0, 0);
-        imagerectangle(
+        $frameGraphColor = \imagecolorallocate($handle, 0, 0, 0);
+        \imagerectangle(
             $handle,
             $this->graphArea[0] + $this->graphXStart,
             $this->graphArea[1] + $this->graphYStart,
@@ -416,7 +510,7 @@ class StackedBarChartMgr
         );
 
         // Рисуем рамку легенды
-        imagerectangle(
+        \imagerectangle(
             $handle,
             $this->graphLegendArea[0],
             $this->graphLegendArea[1],
@@ -440,108 +534,40 @@ class StackedBarChartMgr
             asort($arrayUnderX);
 
             foreach ($arrayOnX as $i => $value) {
-                $rectColor = ImageColorAllocate(
-                    $handle,
-                    $this->graphYVals[$i]['color'][0],
-                    $this->graphYVals[$i]['color'][1],
-                    $this->graphYVals[$i]['color'][2]
-                );
-
-                imagefilledrectangle(
-                    $handle,
+                $blockArea = array(
                     $this->pxOneOnX * $key + $this->graphXStart,
                     $this->graphYVals[$i]['values_px'][$key] + $this->graphYStart,
                     $this->pxOneOnX * ($key + 1) + $this->graphXStart,
-                    $this->pxXCoordOnY + $this->graphYStart,
-                    $rectColor
+                    $this->pxXCoordOnY + $this->graphYStart
                 );
 
-                // Задаем цвет рамки графика и рисуем ее
-                $frameColorR = $this->graphYVals[$i]['color'][0] - $darkColorDelta;
-                if ($frameColorR < 0) {
-                    $frameColorR = 0;
-                }
-
-                $frameColorG = $this->graphYVals[$i]['color'][1] - $darkColorDelta;
-                if ($frameColorG < 0) {
-                    $frameColorG = 0;
-                }
-
-                $frameColorB = $this->graphYVals[$i]['color'][2] - $darkColorDelta;
-                if ($frameColorB < 0) {
-                    $frameColorB = 0;
-                }
-
-                $rectFrameColor = ImageColorAllocate(
+                $this->_drawGraphDataBlock(
                     $handle,
-                    $frameColorR,
-                    $frameColorG,
-                    $frameColorB
-                );
-
-                imagerectangle(
-                    $handle,
-                    $this->pxOneOnX * $key + $this->graphXStart,
-                    $this->graphYVals[$i]['values_px'][$key] + $this->graphYStart,
-                    $this->pxOneOnX * ($key + 1) + $this->graphXStart,
-                    $this->pxXCoordOnY + $this->graphYStart,
-                    $rectFrameColor
+                    $this->graphYVals[$i]['color'],
+                    $darkColorDelta,
+                    $blockArea
                 );
             }
 
             foreach ($arrayUnderX as $i => $value) {
-                $rectColor = ImageColorAllocate(
-                    $handle,
-                    $this->graphYVals[$i]['color'][0],
-                    $this->graphYVals[$i]['color'][1],
-                    $this->graphYVals[$i]['color'][2]
-                );
-
-                imagefilledrectangle(
-                    $handle,
+                $blockArea = array(
                     $this->pxOneOnX * $key + $this->graphXStart,
                     $this->graphYVals[$i]['values_px'][$key] + $this->graphYStart,
                     $this->pxOneOnX * ($key + 1) + $this->graphXStart,
                     $this->pxXCoordOnY + $this->graphYStart,
-                    $rectColor
                 );
 
-                // Задаем цвет рамки графика и рисуем ее
-                $frameColorR = $this->graphYVals[$i]['color'][0] - $darkColorDelta;
-                if ($frameColorR < 0) {
-                    $frameColorR = 0;
-                }
-
-                $frameColorG = $this->graphYVals[$i]['color'][1] - $darkColorDelta;
-                if ($frameColorG < 0) {
-                    $frameColorG = 0;
-                }
-
-                $frameColorB = $this->graphYVals[$i]['color'][2] - $darkColorDelta;
-                if ($frameColorB < 0) {
-                    $frameColorB = 0;
-                }
-
-                $rectFrameColor = ImageColorAllocate(
+                $this->_drawGraphDataBlock(
                     $handle,
-                    $frameColorR,
-                    $frameColorG,
-                    $frameColorB
-                );
-
-                imagerectangle(
-                    $handle,
-                    $this->pxOneOnX * $key + $this->graphXStart,
-                    $this->graphYVals[$i]['values_px'][$key] + $this->graphYStart,
-                    $this->pxOneOnX * ($key + 1) + $this->graphXStart,
-                    $this->pxXCoordOnY + $this->graphYStart,
-                    $rectFrameColor
+                    $this->graphYVals[$i]['color'],
+                    $darkColorDelta,
+                    $blockArea
                 );
             }
         }
 
-        $xCoordColor = ImageColorAllocate($handle, 0, 0, 0);
-        imagefilledrectangle(
+        $xCoordColor = \imagecolorallocate($handle, 0, 0, 0);
+        \imagefilledrectangle(
             $handle,
             $this->graphXStart,
             $this->pxXCoordOnY - 1 + $this->graphYStart,
@@ -550,16 +576,17 @@ class StackedBarChartMgr
             $xCoordColor
         );
 
-        /*$txt_color = ImageColorAllocate ($handle, 0, 0, 0);
-
-        ImageString ($handle, 5, 5, 18, "Test", $txt_color);*/
+        // Рисуем легенду на графике
+        $this->_drawLegend($handle);
 
         if ($inFile) {
-            imagepng($handle, $filePath);
+            \imagepng($handle, $filePath);
         } else {
-            imagepng($handle);
+            \imagepng($handle);
         }
 
-        imagedestroy($handle);
+        \imagedestroy($handle);
+
+        return true;
     }
 }
