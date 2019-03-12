@@ -30,6 +30,23 @@ class StackedBarChartMgr
     private $graphYVals;
 
     /**
+     * Количество пикселей в единице измерения по оси X
+     * 
+     * @var int
+     */
+    private $pxOneOnX;
+
+    /**
+     * Количество пикселей в единице измерения по оси Y
+     */
+    private $pxOneOnY;
+
+    /**
+     * Уровень оси X в пикселях оси Y
+     */
+    private $pxXCoordOnY;
+
+    /**
      * Текст последней ошибки
      */
     private $errorMsg;
@@ -44,7 +61,110 @@ class StackedBarChartMgr
         $this->graphArea = array(0, 0, 0, 0);
         $this->graphXVals = array();
         $this->graphYVals = array();
+        $this->pxOneOnX = 0;
+        $this->pxOneOnY = 0;
+        $this->pxXCoordOnY = 0;
         $this->errorMsg = "";
+    }
+
+    /**
+     * Пересчет количества пикселей на единицу
+     * измерения по оси X
+     * 
+     * @return void
+     */
+    private function _calcPxOneOnX()
+    {
+        if (count($this->graphXVals) > 0) {
+            $this->pxOneOnX = round($this->graphArea[2] / count($this->graphXVals));
+        } else {
+            $this->pxOneOnX = 0;
+        }
+    }
+
+    /**
+     * Пересчет количества пикселей на единицу
+     * измерения по оси Y
+     * 
+     * @return void
+     */
+    private function _calcPxOneOnY()
+    {
+        if (count($this->graphYVals) > 0) {
+            $first = true;
+            $maxVal = 0;
+            $minVal = 0;
+            foreach ($this->graphYVals as $yVals) {
+                foreach ($yVals['values'] as $yVal) {
+                    if ($first) {
+                        $maxVal = $yVal;
+                        $minVal = $yVal;
+                        $first = false;
+                    } else {
+                        if ($yVal > $maxVal) {
+                            $maxVal = $yVal;
+                        }
+
+                        if ($yVal < $minVal) {
+                            $minVal = $yVal;
+                        }
+                    }
+                }
+            }
+
+            if (($minVal >= 0 && $maxVal >= 0)
+                or ($minVal < 0 && $maxVal < 0)
+            ) {
+                if ($minVal < 0) {
+                    // Если графики ниже оси X, приводим
+                    // значения к положительным и обмениваем
+                    $tmpVal = $minVal * (-1);
+                    $minVal = $maxVal * (-1);
+                    $maxVal = $tmpVal;
+                    $this->pxXCoordOnY = 0;
+                } else {
+                    $this->pxXCoordOnY = $this->graphArea[3];
+                }
+
+                if ($maxVal > 0) {
+                    $this->pxOneOnY = intval($this->graphArea[3] / $maxVal);
+                } else {
+                    $this->pxOneOnY = 0;
+                }
+            } else {
+                // Графики и расположены и выше, и ниже оси X
+                if ($minVal < 0) {
+                    $minVal *= (-1);
+                }
+
+                if ($maxVal < 0) {
+                    $maxVal *= (-1);
+                }
+
+                if ($minVal + $maxVal > 0) {
+                    $this->pxOneOnY = intval($this->graphArea[3] / ($minVal + $maxVal));
+                    $this->pxXCoordOnY = ($maxVal * $this->pxOneOnY);
+                } else {
+                    $this->pxOneOnY = 0;
+                }
+            }
+        } else {
+            $this->pxOneOnY = 0;
+        }
+    }
+
+    /**
+     * Пересчитываем данные пиксели
+     * 
+     * @return void
+     */
+    public function _calcYValuesInPx()
+    {
+        foreach ($this->graphYVals as &$yVals) {
+            foreach ($yVals['values'] as $key => $yVal) {
+                $yVals['values_px'][$key] = $this->pxXCoordOnY - ($yVal * $this->pxOneOnY);
+            }
+        }
     }
 
     /**
@@ -107,6 +227,7 @@ class StackedBarChartMgr
         }
 
         $this->graphXVals = $tmpArray;
+        $this->_calcPxOneOnX();
         return true;
     }
 
@@ -172,6 +293,7 @@ class StackedBarChartMgr
         }
 
         array_push($this->graphYVals, $tmpArray);
+        $this->_calcPxOneOnY();
         return true;
     }
 
@@ -198,5 +320,50 @@ class StackedBarChartMgr
     public function getYCoordinates()
     {
         return $this->graphYVals;
+    }
+
+    /**
+     * Рисуем график
+     * 
+     * @return void
+     */
+    public function draw()
+    {
+        $this->_calcYValuesInPx();
+
+        header("Content-type: image/png");
+
+        $handle = ImageCreate($this->graphArea['2'], $this->graphArea['3']);
+        if ($handle === false) {
+            die("Cannot Create image");
+        }
+
+        $bgColor = ImageColorAllocate($handle, 255, 255, 255);
+
+        $xCoordColor = ImageColorAllocate($handle, 0, 0, 0);
+
+        $rectColor = ImageColorAllocate($handle, 255, 0, 0);
+
+        //echo "<p>Ось X: " . $this->pxXCoordOnY . "</p>";
+        //echo "<textarea>" . print_r($this->graphYVals, true) . "</textarea>";
+
+        foreach ($this->graphXVals as $key => $value) {
+            //echo "<p>" . ($this->pxOneOnX * $key) . ", " . $this->graphYVals[0]['values_px'][$key] . ", "
+            //    . ($this->pxOneOnX * ($key + 1)) . ", " . $this->pxXCoordOnY . "</p>";
+            imagefilledrectangle(
+                $handle,
+                $this->pxOneOnX * $key,
+                $this->graphYVals[0]['values_px'][$key],
+                $this->pxOneOnX * ($key + 1),
+                $this->pxXCoordOnY,
+                $rectColor
+            );
+        }
+
+        /*$txt_color = ImageColorAllocate ($handle, 0, 0, 0);
+
+        ImageString ($handle, 5, 5, 18, "PHP.About.com", $txt_color);*/
+
+        ImagePng($handle);
     }
 }
