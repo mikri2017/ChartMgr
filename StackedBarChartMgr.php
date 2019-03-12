@@ -340,16 +340,17 @@ class StackedBarChartMgr
 
         $bgColor = ImageColorAllocate($handle, 255, 255, 255);
 
-        $xCoordColor = ImageColorAllocate($handle, 0, 0, 0);
-
-        $rectColor = ImageColorAllocate($handle, 255, 0, 0);
-
-        //echo "<p>Ось X: " . $this->pxXCoordOnY . "</p>";
         //echo "<textarea>" . print_r($this->graphYVals, true) . "</textarea>";
+        //exit(0);
 
         foreach ($this->graphXVals as $key => $value) {
-            //echo "<p>" . ($this->pxOneOnX * $key) . ", " . $this->graphYVals[0]['values_px'][$key] . ", "
-            //    . ($this->pxOneOnX * ($key + 1)) . ", " . $this->pxXCoordOnY . "</p>";
+            $rectColor = ImageColorAllocate(
+                $handle,
+                $this->graphYVals[0]['color'][0],
+                $this->graphYVals[0]['color'][1],
+                $this->graphYVals[0]['color'][2]
+            );
+
             imagefilledrectangle(
                 $handle,
                 $this->pxOneOnX * $key,
@@ -360,9 +361,19 @@ class StackedBarChartMgr
             );
         }
 
+        $xCoordColor = ImageColorAllocate($handle, 0, 0, 0);
+        imagefilledrectangle(
+            $handle,
+            0,
+            $this->pxXCoordOnY - 1,
+            $this->graphArea['2'],
+            $this->pxXCoordOnY + 1,
+            $xCoordColor
+        );
+
         /*$txt_color = ImageColorAllocate ($handle, 0, 0, 0);
 
-        ImageString ($handle, 5, 5, 18, "PHP.About.com", $txt_color);*/
+        ImageString ($handle, 5, 5, 18, "Test", $txt_color);*/
 
         ImagePng($handle);
     }
