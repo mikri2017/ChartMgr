@@ -378,11 +378,15 @@ class StackedBarChartMgr
     }
 
     /**
-     * Рисуем график
+     * Отрисовка и вывод графика в файл, либо в браузер
+     * 
+     * @param bool   $inFile   Сохранить ли изображение графика в файл,
+     *                         по умолчанию, false
+     * @param string $filePath Путь к файлу, в который сохранить график
      * 
      * @return void
      */
-    public function draw()
+    public function draw($inFile = false, $filePath = "")
     {
         $this->_calcYValuesInPx();
 
@@ -550,6 +554,12 @@ class StackedBarChartMgr
 
         ImageString ($handle, 5, 5, 18, "Test", $txt_color);*/
 
-        ImagePng($handle);
+        if ($inFile) {
+            imagepng($handle, $filePath);
+        } else {
+            imagepng($handle);
+        }
+
+        imagedestroy($handle);
     }
 }
