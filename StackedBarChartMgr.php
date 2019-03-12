@@ -339,6 +339,7 @@ class StackedBarChartMgr
         }
 
         $bgColor = ImageColorAllocate($handle, 255, 255, 255);
+        $darkColorDelta = 70;
 
         //echo "<textarea>" . print_r($this->graphYVals, true) . "</textarea>";
         //exit(0);
@@ -373,6 +374,38 @@ class StackedBarChartMgr
                     $this->pxXCoordOnY,
                     $rectColor
                 );
+
+                // Задаем цвет рамки графика и рисуем ее
+                $frameColorR = $this->graphYVals[$i]['color'][0] - $darkColorDelta;
+                if ($frameColorR < 0) {
+                    $frameColorR = 0;
+                }
+
+                $frameColorG = $this->graphYVals[$i]['color'][1] - $darkColorDelta;
+                if ($frameColorG < 0) {
+                    $frameColorG = 0;
+                }
+
+                $frameColorB = $this->graphYVals[$i]['color'][2] - $darkColorDelta;
+                if ($frameColorB < 0) {
+                    $frameColorB = 0;
+                }
+
+                $rectFrameColor = ImageColorAllocate(
+                    $handle,
+                    $frameColorR,
+                    $frameColorG,
+                    $frameColorB
+                );
+
+                imagerectangle(
+                    $handle,
+                    $this->pxOneOnX * $key,
+                    $this->graphYVals[$i]['values_px'][$key],
+                    $this->pxOneOnX * ($key + 1),
+                    $this->pxXCoordOnY,
+                    $rectFrameColor
+                );
             }
 
             foreach ($arrayUnderX as $i => $value) {
@@ -390,6 +423,38 @@ class StackedBarChartMgr
                     $this->pxOneOnX * ($key + 1),
                     $this->pxXCoordOnY,
                     $rectColor
+                );
+
+                // Задаем цвет рамки графика и рисуем ее
+                $frameColorR = $this->graphYVals[$i]['color'][0] - $darkColorDelta;
+                if ($frameColorR < 0) {
+                    $frameColorR = 0;
+                }
+
+                $frameColorG = $this->graphYVals[$i]['color'][1] - $darkColorDelta;
+                if ($frameColorG < 0) {
+                    $frameColorG = 0;
+                }
+
+                $frameColorB = $this->graphYVals[$i]['color'][2] - $darkColorDelta;
+                if ($frameColorB < 0) {
+                    $frameColorB = 0;
+                }
+
+                $rectFrameColor = ImageColorAllocate(
+                    $handle,
+                    $frameColorR,
+                    $frameColorG,
+                    $frameColorB
+                );
+
+                imagerectangle(
+                    $handle,
+                    $this->pxOneOnX * $key,
+                    $this->graphYVals[$i]['values_px'][$key],
+                    $this->pxOneOnX * ($key + 1),
+                    $this->pxXCoordOnY,
+                    $rectFrameColor
                 );
             }
         }
