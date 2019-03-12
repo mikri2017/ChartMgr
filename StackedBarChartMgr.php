@@ -11,9 +11,39 @@ namespace MIKRI\ChartMgr;
 class StackedBarChartMgr
 {
     /**
-     * Массив размера поля графика
+     * Массив размера области графика
+     * 
+     * @var array
      */
     private $graphArea;
+
+    /**
+     * Координата X - начало области графика
+     * 
+     * @var int
+     */
+    private $graphXStart;
+
+    /**
+     * Координата Y - начало области графика
+     * 
+     * @var int
+     */
+    private $graphYStart;
+
+    /**
+     * Массив размера области легенды графика
+     * 
+     * @var array
+     */
+    private $graphLegendArea;
+
+    /**
+     * Массив размера области графика с легендой
+     * 
+     * @var array
+     */
+    private $graphAreaWithLegend;
 
     /**
      * Массив значений оси X
@@ -58,7 +88,11 @@ class StackedBarChartMgr
      */
     public function __construct()
     {
+        $this->graphAreaWithLegend = array(0, 0, 0, 0);
         $this->graphArea = array(0, 0, 0, 0);
+        $this->graphXStart = 0;
+        $this->graphYStart = 0;
+        $this->graphLegendArea = array(0, 0, 0, 0);
         $this->graphXVals = array();
         $this->graphYVals = array();
         $this->pxOneOnX = 0;
@@ -154,11 +188,11 @@ class StackedBarChartMgr
     }
 
     /**
-     * Пересчитываем данные пиксели
+     * Пересчитываем данные в пиксели
      * 
      * @return void
      */
-    public function _calcYValuesInPx()
+    private function _calcYValuesInPx()
     {
         foreach ($this->graphYVals as &$yVals) {
             foreach ($yVals['values'] as $key => $yVal) {
@@ -187,8 +221,29 @@ class StackedBarChartMgr
      */
     public function setGraphArea($width, $height)
     {
-        $this->graphArea[2] = intval($width);
-        $this->graphArea[3] = intval($height);
+        $this->graphAreaWithLegend[2] = intval($width);
+        $this->graphAreaWithLegend[3] = intval($height);
+
+        // Ширина легенды в 20% всего поля
+        $graphLegendWidth = $this->graphAreaWithLegend[2] / 100 * 20;
+
+        // Ширина описания оси Y в 10% всего поля
+        $this->graphXStart = $this->graphAreaWithLegend[2] / 100 * 10;
+
+        // Высота отступа сверху по оси Y в 3% всего поля
+        $this->graphYStart = $this->graphAreaWithLegend[3] / 100 * 3;
+
+        // Высота описания оси X в 20% всего поля
+        $graphXAxisDescHeight = $this->graphAreaWithLegend[3] / 100 * 15;
+
+        $this->graphLegendArea[0] = $this->graphAreaWithLegend[2] - $graphLegendWidth;
+        $this->graphLegendArea[1] = $this->graphYStart;
+        $this->graphLegendArea[2] = $this->graphAreaWithLegend[2];
+        $this->graphLegendArea[3] = $this->graphAreaWithLegend[3];
+        $this->graphArea[0] = 0;
+        $this->graphArea[1] = 0;
+        $this->graphArea[2] = $this->graphAreaWithLegend[2] - $this->graphXStart - $graphLegendWidth;
+        $this->graphArea[3] = $this->graphAreaWithLegend[3] - $this->graphYStart - $graphXAxisDescHeight;
     }
 
     /**
@@ -333,7 +388,11 @@ class StackedBarChartMgr
 
         header("Content-type: image/png");
 
-        $handle = ImageCreate($this->graphArea['2'], $this->graphArea['3']);
+        $handle = ImageCreate(
+            $this->graphAreaWithLegend[2],
+            $this->graphAreaWithLegend[3]
+        );
+
         if ($handle === false) {
             die("Cannot Create image");
         }
@@ -341,8 +400,26 @@ class StackedBarChartMgr
         $bgColor = ImageColorAllocate($handle, 255, 255, 255);
         $darkColorDelta = 70;
 
-        //echo "<textarea>" . print_r($this->graphYVals, true) . "</textarea>";
-        //exit(0);
+        // Рисуем рамку графика
+        $frameGraphColor = ImageColorAllocate($handle, 0, 0, 0);
+        imagerectangle(
+            $handle,
+            $this->graphArea[0] + $this->graphXStart,
+            $this->graphArea[1] + $this->graphYStart,
+            $this->graphArea[2] + $this->graphXStart,
+            $this->graphArea[3] + $this->graphYStart,
+            $frameGraphColor
+        );
+
+        // Рисуем рамку легенды
+        imagerectangle(
+            $handle,
+            $this->graphLegendArea[0],
+            $this->graphLegendArea[1],
+            $this->graphLegendArea[2],
+            $this->graphLegendArea[3],
+            $frameGraphColor
+        );
 
         foreach ($this->graphXVals as $key => $value) {
             $arrayOnX = array();
@@ -368,10 +445,10 @@ class StackedBarChartMgr
 
                 imagefilledrectangle(
                     $handle,
-                    $this->pxOneOnX * $key,
-                    $this->graphYVals[$i]['values_px'][$key],
-                    $this->pxOneOnX * ($key + 1),
-                    $this->pxXCoordOnY,
+                    $this->pxOneOnX * $key + $this->graphXStart,
+                    $this->graphYVals[$i]['values_px'][$key] + $this->graphYStart,
+                    $this->pxOneOnX * ($key + 1) + $this->graphXStart,
+                    $this->pxXCoordOnY + $this->graphYStart,
                     $rectColor
                 );
 
@@ -400,10 +477,10 @@ class StackedBarChartMgr
 
                 imagerectangle(
                     $handle,
-                    $this->pxOneOnX * $key,
-                    $this->graphYVals[$i]['values_px'][$key],
-                    $this->pxOneOnX * ($key + 1),
-                    $this->pxXCoordOnY,
+                    $this->pxOneOnX * $key + $this->graphXStart,
+                    $this->graphYVals[$i]['values_px'][$key] + $this->graphYStart,
+                    $this->pxOneOnX * ($key + 1) + $this->graphXStart,
+                    $this->pxXCoordOnY + $this->graphYStart,
                     $rectFrameColor
                 );
             }
@@ -418,10 +495,10 @@ class StackedBarChartMgr
 
                 imagefilledrectangle(
                     $handle,
-                    $this->pxOneOnX * $key,
-                    $this->graphYVals[$i]['values_px'][$key],
-                    $this->pxOneOnX * ($key + 1),
-                    $this->pxXCoordOnY,
+                    $this->pxOneOnX * $key + $this->graphXStart,
+                    $this->graphYVals[$i]['values_px'][$key] + $this->graphYStart,
+                    $this->pxOneOnX * ($key + 1) + $this->graphXStart,
+                    $this->pxXCoordOnY + $this->graphYStart,
                     $rectColor
                 );
 
@@ -450,10 +527,10 @@ class StackedBarChartMgr
 
                 imagerectangle(
                     $handle,
-                    $this->pxOneOnX * $key,
-                    $this->graphYVals[$i]['values_px'][$key],
-                    $this->pxOneOnX * ($key + 1),
-                    $this->pxXCoordOnY,
+                    $this->pxOneOnX * $key + $this->graphXStart,
+                    $this->graphYVals[$i]['values_px'][$key] + $this->graphYStart,
+                    $this->pxOneOnX * ($key + 1) + $this->graphXStart,
+                    $this->pxXCoordOnY + $this->graphYStart,
                     $rectFrameColor
                 );
             }
@@ -462,10 +539,10 @@ class StackedBarChartMgr
         $xCoordColor = ImageColorAllocate($handle, 0, 0, 0);
         imagefilledrectangle(
             $handle,
-            0,
-            $this->pxXCoordOnY - 1,
-            $this->graphArea['2'],
-            $this->pxXCoordOnY + 1,
+            $this->graphXStart,
+            $this->pxXCoordOnY - 1 + $this->graphYStart,
+            $this->graphArea[2] + $this->graphXStart,
+            $this->pxXCoordOnY + 1 + $this->graphYStart,
             $xCoordColor
         );
 
