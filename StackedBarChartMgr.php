@@ -267,13 +267,15 @@ class StackedBarChartMgr
         $strHeight = 20;
         $blockSize = 10;
         $darkColorDelta = 70;
+        $margin = 5;
+
         $i = 0;
         foreach ($this->graphYVals as $yVals) {
             $blockArea = array(
-                $this->graphLegendArea[0],
-                $this->graphLegendArea[1] + $i * $strHeight,
-                $this->graphLegendArea[0] + $blockSize,
-                $this->graphLegendArea[1] + $i * $strHeight + $blockSize
+                $margin + $this->graphLegendArea[0],
+                $margin + $this->graphLegendArea[1] + $i * $strHeight,
+                $margin + $this->graphLegendArea[0] + $blockSize,
+                $margin + $this->graphLegendArea[1] + $i * $strHeight + $blockSize
             );
 
             $this->_drawGraphDataBlock($handle, $yVals['color'], $darkColorDelta, $blockArea);
@@ -281,8 +283,8 @@ class StackedBarChartMgr
             $this->fontMgr->setFontParams(8, $yVals['color']);
             $this->fontMgr->drawText(
                 $handle,
-                $this->graphLegendArea[0] + $blockSize + 5,
-                $this->graphLegendArea[1] + $i * $strHeight + $blockSize,
+                $margin + $this->graphLegendArea[0] + $blockSize + 5,
+                $margin + $this->graphLegendArea[1] + $i * $strHeight + $blockSize,
                 $yVals['caption']
             );
 
@@ -570,9 +572,9 @@ class StackedBarChartMgr
         \imagefilledrectangle(
             $handle,
             $this->graphXStart,
-            $this->pxXCoordOnY - 1 + $this->graphYStart,
+            $this->pxXCoordOnY + $this->graphYStart,
             $this->graphArea[2] + $this->graphXStart,
-            $this->pxXCoordOnY + 1 + $this->graphYStart,
+            $this->pxXCoordOnY + $this->graphYStart,
             $xCoordColor
         );
 
