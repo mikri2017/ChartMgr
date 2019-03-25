@@ -116,7 +116,7 @@ class BaseCharMgr
      * 
      * @return void
      */
-    protected function _calcPxOneOnX()
+    private function _calcPxOneOnX()
     {
         if (count($this->graphXVals) > 0) {
             $this->pxOneOnX = round($this->graphArea[2] / count($this->graphXVals));
@@ -131,7 +131,7 @@ class BaseCharMgr
      * 
      * @return void
      */
-    protected function _calcPxOneOnY()
+    private function _calcPxOneOnY()
     {
         if (count($this->graphYVals) > 0) {
             $first = true;
@@ -201,11 +201,11 @@ class BaseCharMgr
      * 
      * @return void
      */
-    protected function _calcYValuesInPx()
+    protected function calcYValuesInPx()
     {
         foreach ($this->graphYVals as &$yVals) {
             foreach ($yVals['values'] as $key => $yVal) {
-                $yVals['values_px'][$key] = $this->pxXCoordOnY - ($yVal * $this->pxOneOnY);
+                $yVals['vals_px'][$key] = $this->pxXCoordOnY - ($yVal * $this->pxOneOnY);
             }
         }
     }
@@ -213,14 +213,14 @@ class BaseCharMgr
     /**
      * Рисует блок данных на графике по переданным координатам
      * 
-     * @param resource $handle Ресурс изображения от библиотеки GD
+     * @param resource $handle         Ресурс изображения от библиотеки GD
      * @param array    $color
      * @param int      $darkColorDelta
      * @param array    $blockArea
      * 
      * @return bool
      */
-    protected function _drawGraphDataBlock($handle, $color, $darkColorDelta, $blockArea)
+    protected function drawGraphDataBlock($handle, $color, $darkColorDelta, $blockArea)
     {
         // Задаем цвет блока и рисуем его
         $rectColor = \imagecolorallocate($handle, $color[0], $color[1], $color[2]);
@@ -263,7 +263,7 @@ class BaseCharMgr
      * 
      * @return void
      */
-    protected function _drawLegend($handle)
+    protected function drawLegend($handle)
     {
         $strHeight = 20;
         $blockSize = 10;
@@ -279,7 +279,7 @@ class BaseCharMgr
                 $margin + $this->graphLegendArea[1] + $i * $strHeight + $blockSize
             );
 
-            $this->_drawGraphDataBlock($handle, $yVals['color'], $darkColorDelta, $blockArea);
+            $this->drawGraphDataBlock($handle, $yVals['color'], $darkColorDelta, $blockArea);
 
             $this->fontMgr->setFontParams(8, $yVals['color']);
             $this->fontMgr->drawText(
@@ -413,13 +413,13 @@ class BaseCharMgr
         }
 
         foreach ($yValuesArray as $yValue) {
-            if (!is_integer($yValue)) {
+            if (is_integer($yValue) or is_float($yValue)) {
+                array_push($tmpArray['values'], $yValue);
+            } else {
                 $this->errorMsg = "Значения по оси Y на графике должно быть "
-                    . "типа int";
+                    . "типа int/float";
                 return false;
             }
-
-            array_push($tmpArray['values'], $yValue);
         }
 
         // Проверяем переданный цвет

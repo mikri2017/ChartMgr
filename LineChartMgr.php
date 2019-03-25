@@ -8,7 +8,7 @@
 
 namespace MIKRI\ChartMgr;
 
-class StackedBarChartMgr extends BaseCharMgr
+class LineChartMgr extends BaseCharMgr
 {
     /**
      * Конструктор класса
@@ -73,49 +73,39 @@ class StackedBarChartMgr extends BaseCharMgr
             $frameGraphColor
         );
 
+        // Рисуем 
         foreach ($this->graphXVals as $key => $value) {
-            $arrayOnX = array();
-            $arrayUnderX = array();
             for ($i = 0; $i < count($this->graphYVals); $i++) {
-                if ($this->graphYVals[$i]['vals_px'][$key] >= $this->pxXCoordOnY) {
-                    $arrayOnX[$i] = $this->graphYVals[$i]['vals_px'][$key];
+                $lineColor = \imagecolorallocate(
+                    $handle,
+                    $this->graphYVals[$i]['color'][0],
+                    $this->graphYVals[$i]['color'][1],
+                    $this->graphYVals[$i]['color'][2]
+                );
+
+                if ($key > 0) {
+                    $prevX = $key - 1;
                 } else {
-                    $arrayUnderX[$i] = $this->graphYVals[$i]['vals_px'][$key];
+                    $prevX = $key;
                 }
-            }
 
-            arsort($arrayOnX);
-            asort($arrayUnderX);
-
-            foreach ($arrayOnX as $i => $value) {
-                $blockArea = array(
+                \imageline(
+                    $handle,
+                    $this->pxOneOnX * $prevX + $this->graphXStart,
+                    $this->graphYVals[$i]['vals_px'][$prevX] + $this->graphYStart,
                     $this->pxOneOnX * $key + $this->graphXStart,
                     $this->graphYVals[$i]['vals_px'][$key] + $this->graphYStart,
-                    $this->pxOneOnX * ($key + 1) + $this->graphXStart,
-                    $this->pxXCoordOnY + $this->graphYStart
+                    $lineColor
                 );
 
-                $this->drawGraphDataBlock(
+                // Подсвечиваем точки графика жирнее
+                \imagerectangle(
                     $handle,
-                    $this->graphYVals[$i]['color'],
-                    $darkColorDelta,
-                    $blockArea
-                );
-            }
-
-            foreach ($arrayUnderX as $i => $value) {
-                $blockArea = array(
-                    $this->pxOneOnX * $key + $this->graphXStart,
-                    $this->graphYVals[$i]['vals_px'][$key] + $this->graphYStart,
-                    $this->pxOneOnX * ($key + 1) + $this->graphXStart,
-                    $this->pxXCoordOnY + $this->graphYStart,
-                );
-
-                $this->drawGraphDataBlock(
-                    $handle,
-                    $this->graphYVals[$i]['color'],
-                    $darkColorDelta,
-                    $blockArea
+                    $this->pxOneOnX * $key + $this->graphXStart - 1,
+                    $this->graphYVals[$i]['vals_px'][$key] + $this->graphYStart - 1,
+                    $this->pxOneOnX * $key + $this->graphXStart + 1,
+                    $this->graphYVals[$i]['vals_px'][$key] + $this->graphYStart + 1,
+                    $lineColor
                 );
             }
         }
