@@ -68,7 +68,16 @@ class BaseCharMgr
     protected $pxOneOnX;
 
     /**
-     * Количество пикселей в единице измерения по оси Y
+     * Количество единиц измерения в одной единице на оси Y
+     * 
+     * @var int
+     */
+    protected $countOneOnY;
+
+    /**
+     * Количество пикселей в одной единице по оси Y
+     * 
+     * @var int
      */
     protected $pxOneOnY;
 
@@ -104,6 +113,7 @@ class BaseCharMgr
         $this->graphXVals = array();
         $this->graphYVals = array();
         $this->pxOneOnX = 0;
+        $this->countOneOnY = 1;
         $this->pxOneOnY = 0;
         $this->pxXCoordOnY = 0;
         $this->fontMgr = new FontGDDrawMgr();
@@ -170,7 +180,12 @@ class BaseCharMgr
                 }
 
                 if ($maxVal > 0) {
-                    $this->pxOneOnY = intval($this->graphArea[3] / $maxVal);
+                    if ($maxVal > $this->graphArea[3]) {
+                        // Если график по оси Y не влезает, масштабируем
+                        $this->countOneOnY = ceil($maxVal / $this->graphArea[3]);
+                    }
+
+                    $this->pxOneOnY = intval($this->graphArea[3] / ($maxVal / $this->countOneOnY));
                 } else {
                     $this->pxOneOnY = 0;
                 }
@@ -184,9 +199,16 @@ class BaseCharMgr
                     $maxVal *= (-1);
                 }
 
-                if ($minVal + $maxVal > 0) {
-                    $this->pxOneOnY = intval($this->graphArea[3] / ($minVal + $maxVal));
-                    $this->pxXCoordOnY = ($maxVal * $this->pxOneOnY);
+                $fromMinToMax = $minVal + $maxVal;
+
+                if ($fromMinToMax > 0) {
+                    if ($fromMinToMax > $this->graphArea[3]) {
+                        // Если график по оси Y не влезает, масштабируем
+                        $this->countOneOnY = ceil($fromMinToMax / $this->graphArea[3]);
+                    }
+
+                    $this->pxOneOnY = intval($this->graphArea[3] / ($fromMinToMax / $this->countOneOnY));
+                    $this->pxXCoordOnY = ($maxVal / $this->countOneOnY * $this->pxOneOnY);
                 } else {
                     $this->pxOneOnY = 0;
                 }
@@ -205,7 +227,7 @@ class BaseCharMgr
     {
         foreach ($this->graphYVals as &$yVals) {
             foreach ($yVals['values'] as $key => $yVal) {
-                $yVals['vals_px'][$key] = $this->pxXCoordOnY - ($yVal * $this->pxOneOnY);
+                $yVals['vals_px'][$key] = intval($this->pxXCoordOnY - ($yVal / $this->countOneOnY * $this->pxOneOnY));
             }
         }
     }
