@@ -119,14 +119,16 @@ class FontGDDrawMgr
     }
 
     /**
-     * Рисует на переданном изображении переданный текст
+     * Рисует на переданном изображении переданный текст и возвращает
+     * массив с данными области его прорисовки, либо false в случае
+     * ошибки
      * 
      * @param resource $imgHandle Ресурс изображения от библиотеки GD
      * @param int      $x         Координата оси X левого нижнего угла текста
      * @param int      $y         Координата оси Y левого нижнего угла текста
      * @param string   $text      Текст для отрисовки
      * 
-     * @return bool
+     * @return array
      */
     public function drawText(&$imgHandle, $x, $y, $text)
     {
@@ -168,7 +170,7 @@ class FontGDDrawMgr
                 return false;
             }
 
-            return true;
+            return $textArea;
         }
     }
 }
