@@ -161,6 +161,7 @@ class FontGDDrawMgr
                 $this->ttfFontFilePath,
                 $text
             );
+
             if ($textArea === false) {
                 $errorInf = error_get_last();
                 $this->errorMsg = "Ошибка при отрисовке текста: ("
@@ -170,7 +171,53 @@ class FontGDDrawMgr
                 return false;
             }
 
+            $textArea['x_size'] = $textArea[2] - $textArea[0];
+            $textArea['y_size'] = $textArea[3] - $textArea[5];
+
             return $textArea;
         }
+    }
+
+    /**
+     * Возвращает массив с данными области прорисовки текста,
+     * либо false в случае ошибки
+     * 
+     * @param int    $x    Координата оси X левого нижнего угла текста
+     * @param int    $y    Координата оси Y левого нижнего угла текста
+     * @param string $text Текст для отрисовки
+     * 
+     * @return array
+     */
+    public function drawTextTest($x, $y, $text)
+    {
+        $textArea = \imagettfbbox(
+            $this->ttfFontSize,
+            $this->ttfAngle,
+            $this->ttfFontFilePath,
+            $text
+        );
+
+        if ($textArea === false) {
+            $errorInf = error_get_last();
+            $this->errorMsg = "Ошибка при отрисовке текста: ("
+                . $errorInf['type'] . ") " . $errorInf['message']
+                . " в файле " . $errorInf['file'] . " строка "
+                . $errorInf['line'];
+            return false;
+        }
+
+        // Сдвигаем на переданные нам значения x и y,
+        // потому что левый нижний угол [0,0]
+        for ($i = 0; $i < 7; $i += 2) {
+            // Ось X
+            $textArea[$i] += $x;
+            // Ось Y 
+            $textArea[$i + 1] += $y;
+        }
+
+        $textArea['x_size'] = $textArea[2] - $textArea[0];
+        $textArea['y_size'] = $textArea[3] - $textArea[5];
+
+        return $textArea;
     }
 }
