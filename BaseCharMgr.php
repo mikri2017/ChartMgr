@@ -94,6 +94,13 @@ class BaseCharMgr
     protected $fontMgr;
 
     /**
+     * Рисующий оси на графике
+     * 
+     * @var AxisDrawer
+     */
+    protected $axDrawer;
+
+    /**
      * Текст последней ошибки
      */
     protected $errorMsg;
@@ -117,6 +124,7 @@ class BaseCharMgr
         $this->pxOneOnY = 0;
         $this->pxXCoordOnY = 0;
         $this->fontMgr = new FontGDDrawMgr();
+        $this->axDrawer = new AxisDrawer();
         $this->errorMsg = "";
     }
 

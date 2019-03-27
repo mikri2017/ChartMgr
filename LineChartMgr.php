@@ -18,6 +18,7 @@ class LineChartMgr extends BaseCharMgr
     public function __construct()
     {
         parent::__construct();
+        $this->pxYCoordOnX = 0;
     }
 
     /**
@@ -119,6 +120,32 @@ class LineChartMgr extends BaseCharMgr
             $this->pxXCoordOnY + $this->graphYStart,
             $xCoordColor
         );
+
+        $res = $this->axDrawer->drawHorizontally(
+            $handle,
+            $this->graphArea[0] + $this->graphXStart,
+            $this->graphArea[2] + $this->graphXStart,
+            $this->graphArea[3] + $this->graphYStart,
+            $this->graphArea[0] + $this->graphXStart
+        );
+
+        if (!$res) {
+            $this->errorMsg = $this->axDrawer->getLastError();
+            return false;
+        }
+
+        $res = $this->axDrawer->drawVertically(
+            $handle,
+            $this->graphArea[0] + $this->graphXStart,
+            $this->graphArea[1] + $this->graphYStart,
+            $this->graphArea[3] + $this->graphYStart,
+            $this->pxXCoordOnY + $this->graphYStart
+        );
+
+        if (!$res) {
+            $this->errorMsg = $this->axDrawer->getLastError();
+            return false;
+        }
 
         // Рисуем легенду на графике
         $this->drawLegend($handle);
