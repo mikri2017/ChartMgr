@@ -46,8 +46,6 @@ class AxisDrawer
         $this->pxDeltaMark = 10;
         $this->color = array(0, 0, 0);
         $this->fontMgr = new FontGDDrawMgr();
-        $this->fontMgr->setFontFilePath("verdana.ttf");
-        $this->fontMgr->setFontParams(8, array(0, 0, 0));
     }
 
     /**
@@ -58,6 +56,23 @@ class AxisDrawer
     public function getLastError()
     {
         return $this->errorMsg;
+    }
+
+    /**
+     * Задать путь до ttf файла шрифта
+     * 
+     * @param string $filePath Путь к tff файлу шрифта
+     * 
+     * @return bool
+     */
+    public function setFontFilePath($filePath)
+    {
+        if (!$this->fontMgr->setFontFilePath($filePath)) {
+            $this->errorMsg = $this->fontMgr->getLastError();
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -170,6 +185,11 @@ class AxisDrawer
             $markCaption = $i - $pxZero;
 
             $textArea = $this->fontMgr->drawTextTest(0, 0, $markCaption);
+            if ($textArea === false) {
+                $this->errorMsg = $this->fontMgr->getLastError();
+                return false;
+            }
+
             $textXHalfSize = intval($textArea['x_size'] / 2);
 
             if ($first) {
@@ -179,6 +199,11 @@ class AxisDrawer
                     $markY + $textArea['y_size'],
                     $markCaption
                 );
+
+                if ($textArea === false) {
+                    $this->errorMsg = $this->fontMgr->getLastError();
+                    return false;
+                }
 
                 $prevTextEnd = $i + $textXHalfSize;
                 $first = false;
@@ -190,6 +215,11 @@ class AxisDrawer
                         $markY + $textArea['y_size'],
                         $markCaption
                     );
+
+                    if ($textArea === false) {
+                        $this->errorMsg = $this->fontMgr->getLastError();
+                        return false;
+                    }
 
                     $prevTextEnd = $i + $textXHalfSize;
                 }
@@ -205,6 +235,11 @@ class AxisDrawer
             $markCaption = $i - $pxZero;
 
             $textArea = $this->fontMgr->drawTextTest(0, 0, $markCaption);
+            if ($textArea === false) {
+                $this->errorMsg = $this->fontMgr->getLastError();
+                return false;
+            }
+
             $textXHalfSize = intval($textArea['x_size'] / 2);
 
             if ($first) {
@@ -214,6 +249,11 @@ class AxisDrawer
                     $markY + $textArea['y_size'],
                     $markCaption
                 );
+
+                if ($textArea === false) {
+                    $this->errorMsg = $this->fontMgr->getLastError();
+                    return false;
+                }
 
                 $prevTextBegin = $i - $textXHalfSize;
                 $first = false;
@@ -225,6 +265,11 @@ class AxisDrawer
                         $markY + $textArea['y_size'],
                         $markCaption
                     );
+
+                    if ($textArea === false) {
+                        $this->errorMsg = $this->fontMgr->getLastError();
+                        return false;
+                    }
 
                     $prevTextBegin = $i - $textArea['y_size'];
                 }
@@ -290,16 +335,27 @@ class AxisDrawer
         $pxNextMark = $pxCurMark + $this->pxDeltaMark;
         foreach ($textVals as $value) {
             \imageline($handle, $pxNextMark, $markY0, $pxNextMark, $markY, $color);
+
             $textArea = $this->fontMgr->drawTextTest(0, 0, $value);
+            if ($textArea === false) {
+                $this->errorMsg = $this->fontMgr->getLastError();
+                return false;
+            }
+
             $textXHalfSize = intval($textArea['x_size'] / 2);
 
             if ($first) {
                 $textArea = $this->fontMgr->drawText(
                     $handle,
-                    $pxCurMark + $textXHalfSize,
-                    $markY + $textArea['y_size'],
+                    $pxCurMark + (($pxNextMark - $pxCurMark - $textArea['x_size']) / 2),
+                    $markY + $textArea['y_size_fl'], // Подаем высоту 1-й строки!
                     $value
                 );
+
+                if ($textArea === false) {
+                    $this->errorMsg = $this->fontMgr->getLastError();
+                    return false;
+                }
 
                 $prevTextEnd = $pxCurMark + $textXHalfSize;
                 $first = false;
@@ -308,9 +364,14 @@ class AxisDrawer
                     $textArea = $this->fontMgr->drawText(
                         $handle,
                         $pxCurMark + (($pxNextMark - $pxCurMark - $textArea['x_size']) / 2),
-                        $markY + $textArea['y_size'],
+                        $markY + $textArea['y_size_fl'], // Подаем высоту 1-й строки!
                         $value
                     );
+
+                    if ($textArea === false) {
+                        $this->errorMsg = $this->fontMgr->getLastError();
+                        return false;
+                    }
 
                     $prevTextEnd = $pxCurMark + $textXHalfSize;
                 }
@@ -379,6 +440,11 @@ class AxisDrawer
             $markCaption = (-1) * ($i - $pxZero);
 
             $textArea = $this->fontMgr->drawTextTest(0, 0, $markCaption);
+            if ($textArea === false) {
+                $this->errorMsg = $this->fontMgr->getLastError();
+                return false;
+            }
+
             $textYHalfSize = intval($textArea['y_size'] / 2);
 
             if ($first) {
@@ -388,6 +454,11 @@ class AxisDrawer
                     $i + $textYHalfSize,
                     $markCaption
                 );
+
+                if ($textArea === false) {
+                    $this->errorMsg = $this->fontMgr->getLastError();
+                    return false;
+                }
 
                 $prevTextBegin = $i - $textYHalfSize;
                 $first = false;
@@ -399,6 +470,11 @@ class AxisDrawer
                         $i + $textYHalfSize,
                         $markCaption
                     );
+
+                    if ($textArea === false) {
+                        $this->errorMsg = $this->fontMgr->getLastError();
+                        return false;
+                    }
 
                     $prevTextBegin = $i - $textYHalfSize;
                 }
@@ -414,6 +490,11 @@ class AxisDrawer
             $markCaption = (-1) * ($i - $pxZero);
 
             $textArea = $this->fontMgr->drawTextTest(0, 0, $markCaption);
+            if ($textArea === false) {
+                $this->errorMsg = $this->fontMgr->getLastError();
+                return false;
+            }
+
             $textYHalfSize = intval($textArea['y_size'] / 2);
 
             if ($first) {
@@ -423,6 +504,11 @@ class AxisDrawer
                     $i + $textYHalfSize,
                     $markCaption
                 );
+
+                if ($textArea === false) {
+                    $this->errorMsg = $this->fontMgr->getLastError();
+                    return false;
+                }
 
                 $prevTextEnd = $i + $textYHalfSize;
                 $first = false;
@@ -434,6 +520,11 @@ class AxisDrawer
                         $i + $textYHalfSize,
                         $markCaption
                     );
+
+                    if ($textArea === false) {
+                        $this->errorMsg = $this->fontMgr->getLastError();
+                        return false;
+                    }
 
                     $prevTextEnd = $i + $textYHalfSize;
                 }
