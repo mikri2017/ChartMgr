@@ -311,13 +311,22 @@ class BaseCharMgr
 
             $this->drawGraphDataBlock($handle, $yVals['color'], $darkColorDelta, $blockArea);
 
-            $this->fontMgr->setFontParams(8, $yVals['color']);
-            $this->fontMgr->drawText(
+            if (!$this->fontMgr->setFontParams(8, $yVals['color'])) {
+                $this->errorMsg = $this->fontMgr->getLastError();
+                return false;
+            }
+
+            $res = $this->fontMgr->drawText(
                 $handle,
                 $margin + $this->graphLegendArea[0] + $blockSize + 5,
                 $margin + $this->graphLegendArea[1] + $i * $strHeight + $blockSize,
                 $yVals['caption']
             );
+
+            if ($res) {
+                $this->errorMsg = $this->fontMgr->getLastError();
+                return false;
+            }
 
             $i++;
         }
@@ -331,6 +340,28 @@ class BaseCharMgr
     public function getLastError()
     {
         return $this->errorMsg;
+    }
+
+    /**
+     * Задать путь до ttf файла шрифта
+     * 
+     * @param string $filePath Путь к tff файлу шрифта
+     * 
+     * @return bool
+     */
+    public function setFontFilePath($filePath)
+    {
+        if (!$this->fontMgr->setFontFilePath($filePath)) {
+            $this->errorMsg = $this->fontMgr->getLastError();
+            return false;
+        }
+
+        if (!$this->axDrawer->setFontFilePath($filePath)) {
+            $this->errorMsg = $this->axDrawer->getLastError();
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -356,7 +387,7 @@ class BaseCharMgr
         $this->graphYStart = $this->graphAreaWithLegend[3] / 100 * 3;
 
         // Высота описания оси X в 20% всего поля
-        $graphXAxisDescHeight = $this->graphAreaWithLegend[3] / 100 * 15;
+        $graphXAxisDescHeight = $this->graphAreaWithLegend[3] / 100 * 20;
 
         $this->graphLegendArea[0] = $this->graphAreaWithLegend[2] - $graphLegendWidth;
         $this->graphLegendArea[1] = $this->graphYStart;
