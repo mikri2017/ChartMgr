@@ -82,6 +82,7 @@ class FontGDDrawMgr
             return true;
         } else {
             $this->errorMsg = "Файл " . $filePath . " не найден в системе";
+            return false;
         }
     }
 
@@ -116,6 +117,7 @@ class FontGDDrawMgr
         }
 
         $this->ttfFontColor = $color;
+        return true;
     }
 
     /**
