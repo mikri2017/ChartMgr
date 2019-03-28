@@ -119,12 +119,18 @@ class LineChartMgr extends BaseCharMgr
             $xCoordColor
         );
 
-        $res = $this->axDrawer->drawHorizontally(
+        // Рисуем оси X, Y
+        if (!$this->axDrawer->setAxisFontAndColorParams(8)) {
+            $this->errorMsg = $this->axDrawer->getLastError();
+            return false;
+        }
+
+        $res = $this->axDrawer->drawHorizontallyTextVals(
             $handle,
             $this->graphArea[0] + $this->graphXStart,
             $this->graphArea[2] + $this->graphXStart,
             $this->graphArea[3] + $this->graphYStart,
-            $this->graphArea[0] + $this->graphXStart
+            $this->graphXVals
         );
 
         if (!$res) {
