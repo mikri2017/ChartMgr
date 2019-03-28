@@ -48,8 +48,6 @@ class LineChartMgr extends BaseCharMgr
             return false;
         }
 
-        $this->fontMgr->setFontFilePath("verdana.ttf");
-
         $bgColor = \imagecolorallocate($handle, 255, 255, 255);
         $darkColorDelta = 70;
 

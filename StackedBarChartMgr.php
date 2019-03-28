@@ -41,13 +41,11 @@ class StackedBarChartMgr extends BaseCharMgr
         if ($handle === false) {
             $errorInf = error_get_last();
             $this->errorMsg = "Ошибка при создании изображения: ("
-                    . $errorInf['type'] . ") " . $errorInf['message']
-                    . " в файле " . $errorInf['file'] . " строка "
-                    . $errorInf['line'];
+                . $errorInf['type'] . ") " . $errorInf['message']
+                . " в файле " . $errorInf['file'] . " строка "
+                . $errorInf['line'];
             return false;
         }
-
-        $this->fontMgr->setFontFilePath("verdana.ttf");
 
         $bgColor = \imagecolorallocate($handle, 255, 255, 255);
         $darkColorDelta = 70;
@@ -130,6 +128,20 @@ class StackedBarChartMgr extends BaseCharMgr
             $xCoordColor
         );
 
+        // Рисуем оси X, Y
+        $res = $this->axDrawer->drawHorizontallyTextVals(
+            $handle,
+            $this->graphArea[0] + $this->graphXStart,
+            $this->graphArea[2] + $this->graphXStart,
+            $this->graphArea[3] + $this->graphYStart,
+            $this->graphXVals
+        );
+
+        if (!$res) {
+            $this->errorMsg = $this->axDrawer->getLastError();
+            return false;
+        }
+
         $res = $this->axDrawer->drawVertically(
             $handle,
             $this->graphArea[0] + $this->graphXStart,
@@ -138,8 +150,15 @@ class StackedBarChartMgr extends BaseCharMgr
             $this->pxXCoordOnY + $this->graphYStart
         );
 
+        if (!$res) {
+            $this->errorMsg = $this->axDrawer->getLastError();
+            return false;
+        }
+
         // Рисуем легенду на графике
-        $this->drawLegend($handle);
+        if (!$this->drawLegend($handle)) {
+            return false;
+        }
 
         if ($inFile) {
             \imagepng($handle, $filePath);
