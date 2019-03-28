@@ -133,7 +133,8 @@ class LineChartMgr extends BaseCharMgr
             $this->graphArea[0] + $this->graphXStart,
             $this->graphArea[1] + $this->graphYStart,
             $this->graphArea[3] + $this->graphYStart,
-            $this->pxXCoordOnY + $this->graphYStart
+            $this->pxXCoordOnY + $this->graphYStart,
+            $this->graphYValsLen
         );
 
         if (!$res) {

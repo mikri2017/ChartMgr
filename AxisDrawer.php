@@ -390,15 +390,16 @@ class AxisDrawer
      * Рисует горизонтальную координатную ось с отметками
      * на переданном ресурсе изображения библиотеки GD
      * 
-     * @param resource $handle Ресурс изображения от библиотеки GD
-     * @param int      $x      Координата X на изображении начала оси
-     * @param int      $yBegin Координата Y на изображении начала оси
-     * @param int      $yEnd   Координата Y на изображении конца оси
-     * @param int      $pxZero Координата X - значения 0
+     * @param resource $handle  Ресурс изображения от библиотеки GD
+     * @param int      $x       Координата X на изображении начала оси
+     * @param int      $yBegin  Координата Y на изображении начала оси
+     * @param int      $yEnd    Координата Y на изображении конца оси
+     * @param int      $pxZero  Координата X - значения 0
+     * @param float    $valsLen Минимальное значение на оси Y
      * 
      * @return bool
      */
-    public function drawVertically($handle, $x, $yBegin, $yEnd, $pxZero)
+    public function drawVertically($handle, $x, $yBegin, $yEnd, $pxZero, $valsLen)
     {
         if (($x < 0) or ($yBegin < 0) or ($yEnd < 0) or ($pxZero < 0)) {
             $this->errorMsg = "Переданные параметры должны быть не меньше нуля!"
@@ -421,6 +422,8 @@ class AxisDrawer
 
         $this->pxDeltaMark = 10;
 
+        $deltaVal = intval($valsLen * $this->pxDeltaMark / ($yEnd - $yBegin));
+
         $color = \imagecolorallocate(
             $handle,
             $this->color[0],
@@ -435,11 +438,13 @@ class AxisDrawer
 
         $first = true;
         $prevTextBegin = 0;
+        $curVal = 0;
         for ($i = $pxZero; $i >= $yBegin; $i -= $this->pxDeltaMark) {
             \imageline($handle, $markX0, $i, $markX, $i, $color);
 
             // Рисуем подпись метки
-            $markCaption = (-1) * ($i - $pxZero);
+            $markCaption = $curVal;
+            $curVal += $deltaVal;
 
             $textArea = $this->fontMgr->drawTextTest(0, 0, $markCaption);
             if ($textArea === false) {
@@ -485,11 +490,13 @@ class AxisDrawer
 
         $first = true;
         $prevTextEnd = 0;
+        $curVal = 0;
         for ($i = $pxZero; $i <= $yEnd; $i += $this->pxDeltaMark) {
             \imageline($handle, $markX0, $i, $markX, $i, $color);
 
             // Рисуем подпись метки
-            $markCaption = (-1) * ($i - $pxZero);
+            $markCaption = $curVal;
+            $curVal -= $deltaVal;
 
             $textArea = $this->fontMgr->drawTextTest(0, 0, $markCaption);
             if ($textArea === false) {

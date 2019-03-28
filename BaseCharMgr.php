@@ -61,6 +61,13 @@ class BaseCharMgr
     protected $graphYVals;
 
     /**
+     * Максимальная длина графика в переданных значениях
+     * 
+     * @var float
+     */
+    protected $graphYValsLen;
+
+    /**
      * Количество пикселей в единице измерения по оси X
      * 
      * @var int
@@ -123,6 +130,7 @@ class BaseCharMgr
         $this->graphLegendArea = array(0, 0, 0, 0);
         $this->graphXVals = array();
         $this->graphYVals = array();
+        $this->graphYValsLen = 0;
         $this->pxOneOnX = 0;
         $this->countOneOnY = 1;
         $this->pxOneOnY = 0;
@@ -191,6 +199,8 @@ class BaseCharMgr
                     $this->pxXCoordOnY = $this->graphArea[3];
                 }
 
+                $this->graphYValsLen = $maxVal;
+
                 if ($maxVal > 0) {
                     if ($maxVal > $this->graphArea[3]) {
                         // Если график по оси Y не влезает, масштабируем
@@ -211,15 +221,16 @@ class BaseCharMgr
                     $maxVal *= (-1);
                 }
 
-                $fromMinToMax = $minVal + $maxVal;
+                // Общая высота графика в переданных значениях
+                $this->graphYValsLen = $minVal + $maxVal;
 
-                if ($fromMinToMax > 0) {
-                    if ($fromMinToMax > $this->graphArea[3]) {
+                if ($this->graphYValsLen > 0) {
+                    if ($this->graphYValsLen > $this->graphArea[3]) {
                         // Если график по оси Y не влезает, масштабируем
-                        $this->countOneOnY = ceil($fromMinToMax / $this->graphArea[3]);
+                        $this->countOneOnY = ceil($this->graphYValsLen / $this->graphArea[3]);
                     }
 
-                    $this->pxOneOnY = intval($this->graphArea[3] / ($fromMinToMax / $this->countOneOnY));
+                    $this->pxOneOnY = intval($this->graphArea[3] / ($this->graphYValsLen / $this->countOneOnY));
                     $this->pxXCoordOnY = ($maxVal / $this->countOneOnY * $this->pxOneOnY);
                 } else {
                     $this->pxOneOnY = 0;
