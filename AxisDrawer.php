@@ -61,6 +61,60 @@ class AxisDrawer
     }
 
     /**
+     * Задаем параметры шрифта координатной оси
+     * 
+     * @param array $color     Массив из 3-х целочисленных элементов: R, G, B
+     * @param int   $size      Размер шрифта, по умолчанию, 10
+     * @param array $fontColor Цвет шрифта, используется, если захочется текст
+     *                         координатной оси отобразить другим цветом, по
+     *                         умолчанию, false - тот же цвет, что и у оси
+     * @param int   $angle     Угол поворота текста, по умолчанинию,
+     *                         0 - горизонтально
+     * 
+     * @return bool
+     */
+    public function setAxisFontAndColorParams($color = array(0, 0, 0), $size = 10,
+        $fontColor = false, $angle = 0
+    ) {
+        if ($fontColor === false) {
+        } else {
+            if (\is_array($fontColor) and (\count($fontColor) == 3)) {
+                foreach ($fontColor as $key => $value) {
+                    $fontColor[$key] = intval($value);
+                }
+            } else {
+                $this->errorMsg = "Ошибка! Передан некорректный массив fontColor: "
+                    . print_r($fontColor, true);
+                return false;
+            }
+        }
+
+        if (\is_array($color) and (\count($color) == 3)) {
+            $this->color[0] = intval($color[0]);
+            $this->color[1] = intval($color[1]);
+            $this->color[2] = intval($color[2]);
+        } else {
+            $this->errorMsg = "Ошибка! Передан некорректный массив color: "
+                    . print_r($color, true);
+            return false;
+        }
+
+        if ($fontColor === false) {
+            // Задаем цвет шрифта, как у координатной оси
+            $res = $this->fontMgr->setFontParams($size, $this->color, $angle);
+        } else {
+            $res = $this->fontMgr->setFontParams($size, $fontColor, $angle);
+        }
+
+        if (!$res) {
+            $this->errorMsg = $this->fontMgr->getLastError();
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Рисует горизонтальную координатную ось с отметками
      * на переданном ресурсе изображения библиотеки GD
      * 
@@ -92,6 +146,8 @@ class AxisDrawer
                 . " на отрезке оси!";
             return false;
         }
+
+        $this->pxDeltaMark = 10;
 
         $color = \imagecolorallocate(
             $handle,
@@ -179,6 +235,95 @@ class AxisDrawer
     }
 
     /**
+     * Рисует горизонтальную координатную ось с текстовыми
+     * отметками равноудаленными друг от друга на переданном
+     * ресурсе изображения библиотеки GD
+     * 
+     * @param resource $handle      Ресурс изображения от библиотеки GD
+     * @param int      $xBegin      Координата X на изображении начала оси
+     * @param int      $xEnd        Координата X на изображении конца оси
+     * @param int      $y           Координата Y на изображении начала оси
+     * @param array    $textVals    Массив текстовых значений на оси X
+     * @param bool     $fullSection Занять текстовым значением весь отрезок
+     *                              от предыдущего до текущего значения оси
+     * 
+     * @return bool
+     */
+    public function drawHorizontallyTextVals($handle, $xBegin, $xEnd, $y, $textVals, $fullSection = true)
+    {
+        if (($xBegin < 0) or ($xEnd < 0) or ($y < 0)) {
+            $this->errorMsg = "Переданные параметры должны быть не меньше нуля!"
+                . " Переданные значения: xBegin: " . $xBegin . "; xEnd: " . $xEnd
+                . "; y: " . $y;
+            return false;
+        }
+
+        if ($xBegin > $xEnd) {
+            $tmpX = $xBegin;
+            $xBegin = $xEnd;
+            $xEnd = $tmpX;
+        }
+
+        if (count($textVals) == 0) {
+            $this->errorMsg = "Ошибка! Передан пустой массив текстовых"
+                . " значений оси!";
+            return false;
+        }
+
+        $this->pxDeltaMark =  intval(($xEnd - $xBegin) / count($textVals));
+
+        $color = \imagecolorallocate(
+            $handle,
+            $this->color[0],
+            $this->color[1],
+            $this->color[2]
+        );
+        $axisHalfHeight = 5;
+        $markY0 = $y - $axisHalfHeight;
+        $markY = $y + $axisHalfHeight;
+
+        \imageline($handle, $xBegin, $y, $xEnd, $y, $color);
+
+        $first = true;
+        $prevTextEnd = 0;
+        $pxCurMark = $xBegin;
+        $pxNextMark = $pxCurMark + $this->pxDeltaMark;
+        foreach ($textVals as $value) {
+            \imageline($handle, $pxNextMark, $markY0, $pxNextMark, $markY, $color);
+            $textArea = $this->fontMgr->drawTextTest(0, 0, $value);
+            $textXHalfSize = intval($textArea['x_size'] / 2);
+
+            if ($first) {
+                $textArea = $this->fontMgr->drawText(
+                    $handle,
+                    $pxCurMark + $textXHalfSize,
+                    $markY + $textArea['y_size'],
+                    $value
+                );
+
+                $prevTextEnd = $pxCurMark + $textXHalfSize;
+                $first = false;
+            } else {
+                if ($pxCurMark - $textXHalfSize > $prevTextEnd) {
+                    $textArea = $this->fontMgr->drawText(
+                        $handle,
+                        $pxCurMark + (($pxNextMark - $pxCurMark - $textArea['x_size']) / 2),
+                        $markY + $textArea['y_size'],
+                        $value
+                    );
+
+                    $prevTextEnd = $pxCurMark + $textXHalfSize;
+                }
+            }
+
+            $pxCurMark = $pxNextMark;
+            $pxNextMark = $pxCurMark + $this->pxDeltaMark;
+        }
+
+        return true;
+    }
+
+    /**
      * Рисует горизонтальную координатную ось с отметками
      * на переданном ресурсе изображения библиотеки GD
      * 
@@ -210,6 +355,8 @@ class AxisDrawer
                 . " на отрезке оси!";
             return false;
         }
+
+        $this->pxDeltaMark = 10;
 
         $color = \imagecolorallocate(
             $handle,
