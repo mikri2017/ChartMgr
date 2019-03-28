@@ -95,7 +95,7 @@ class FontGDDrawMgr
      * 
      * @return bool
      */
-    public function setFontParams($size = 12, $color = array(0, 0, 0), $angle = 0)
+    public function setFontParams($size = 10, $color = array(0, 0, 0), $angle = 0)
     {
         $this->ttfFontSize = intval($size);
         $this->ttfAngle = intval($angle);
