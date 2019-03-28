@@ -81,6 +81,7 @@ class FontGDDrawMgr
             $this->ttfFontFilePath = $filePath;
             return true;
         } else {
+            $this->ttfFontFilePath = "";
             $this->errorMsg = "Файл " . $filePath . " не найден в системе";
             return false;
         }
@@ -127,7 +128,8 @@ class FontGDDrawMgr
      * 
      * @param resource $imgHandle Ресурс изображения от библиотеки GD
      * @param int      $x         Координата оси X левого нижнего угла текста
-     * @param int      $y         Координата оси Y левого нижнего угла текста
+     * @param int      $y         Координата оси Y левого нижнего угла символа
+     *                            1-й строки текста
      * @param string   $text      Текст для отрисовки
      * 
      * @return array
@@ -137,47 +139,52 @@ class FontGDDrawMgr
         if ($imgHandle === false) {
             $this->errorMsg = "Передан пустой ресурс изображения";
             return false;
-        } else {
-            $fontColor = \imagecolorallocate(
-                $imgHandle,
-                $this->ttfFontColor[0],
-                $this->ttfFontColor[1],
-                $this->ttfFontColor[2]
-            );
-            if ($fontColor === false) {
-                $errorInf = error_get_last();
-                $this->errorMsg = "Ошибка при формировании цвета: ("
-                    . $errorInf['type'] . ") " . $errorInf['message']
-                    . " в файле " . $errorInf['file'] . " строка "
-                    . $errorInf['line'];
-                return false;
-            }
-
-            $textArea = \imagettftext(
-                $imgHandle,
-                $this->ttfFontSize,
-                $this->ttfAngle,
-                $x,
-                $y,
-                $fontColor,
-                $this->ttfFontFilePath,
-                $text
-            );
-
-            if ($textArea === false) {
-                $errorInf = error_get_last();
-                $this->errorMsg = "Ошибка при отрисовке текста: ("
-                    . $errorInf['type'] . ") " . $errorInf['message']
-                    . " в файле " . $errorInf['file'] . " строка "
-                    . $errorInf['line'];
-                return false;
-            }
-
-            $textArea['x_size'] = $textArea[2] - $textArea[0];
-            $textArea['y_size'] = $textArea[3] - $textArea[5];
-
-            return $textArea;
         }
+
+        if (empty($this->ttfFontFilePath)) {
+            $this->errorMsg = "Файл ttf шрифта не задан";
+            return false;
+        }
+
+        $fontColor = \imagecolorallocate(
+            $imgHandle,
+            $this->ttfFontColor[0],
+            $this->ttfFontColor[1],
+            $this->ttfFontColor[2]
+        );
+        if ($fontColor === false) {
+            $errorInf = error_get_last();
+            $this->errorMsg = "Ошибка при формировании цвета: ("
+                . $errorInf['type'] . ") " . $errorInf['message']
+                . " в файле " . $errorInf['file'] . " строка "
+                . $errorInf['line'];
+            return false;
+        }
+
+        $textArea = \imagettftext(
+            $imgHandle,
+            $this->ttfFontSize,
+            $this->ttfAngle,
+            $x,
+            $y,
+            $fontColor,
+            $this->ttfFontFilePath,
+            $text
+        );
+
+        if ($textArea === false) {
+            $errorInf = error_get_last();
+            $this->errorMsg = "Ошибка при отрисовке текста: ("
+                . $errorInf['type'] . ") " . $errorInf['message']
+                . " в файле " . $errorInf['file'] . " строка "
+                . $errorInf['line'];
+            return false;
+        }
+
+        $textArea['x_size'] = $textArea[2] - $textArea[0];
+        $textArea['y_size'] = $textArea[3] - $textArea[5];
+
+        return $textArea;
     }
 
     /**
@@ -185,13 +192,37 @@ class FontGDDrawMgr
      * либо false в случае ошибки
      * 
      * @param int    $x    Координата оси X левого нижнего угла текста
-     * @param int    $y    Координата оси Y левого нижнего угла текста
+     * @param int    $y    Координата оси Y левого нижнего угла символа
+     *                     1-й строки текста
      * @param string $text Текст для отрисовки
      * 
      * @return array
      */
     public function drawTextTest($x, $y, $text)
     {
+        if (empty($this->ttfFontFilePath)) {
+            $this->errorMsg = "Файл ttf шрифта не задан";
+            return false;
+        }
+
+        $firstLine = \explode("\n", $text)[0];
+
+        $flTextArea = \imagettfbbox(
+            $this->ttfFontSize,
+            $this->ttfAngle,
+            $this->ttfFontFilePath,
+            $firstLine
+        );
+
+        if ($flTextArea === false) {
+            $errorInf = error_get_last();
+            $this->errorMsg = "Ошибка при тесте отрисовки текста: ("
+                . $errorInf['type'] . ") " . $errorInf['message']
+                . " в файле " . $errorInf['file'] . " строка "
+                . $errorInf['line'];
+            return false;
+        }
+
         $textArea = \imagettfbbox(
             $this->ttfFontSize,
             $this->ttfAngle,
@@ -201,7 +232,7 @@ class FontGDDrawMgr
 
         if ($textArea === false) {
             $errorInf = error_get_last();
-            $this->errorMsg = "Ошибка при отрисовке текста: ("
+            $this->errorMsg = "Ошибка при тесте отрисовки текста: ("
                 . $errorInf['type'] . ") " . $errorInf['message']
                 . " в файле " . $errorInf['file'] . " строка "
                 . $errorInf['line'];
@@ -219,6 +250,7 @@ class FontGDDrawMgr
 
         $textArea['x_size'] = $textArea[2] - $textArea[0];
         $textArea['y_size'] = $textArea[3] - $textArea[5];
+        $textArea['y_size_fl'] = $flTextArea[3] - $flTextArea[5];
 
         return $textArea;
     }
