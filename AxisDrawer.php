@@ -422,7 +422,7 @@ class AxisDrawer
 
         $this->pxDeltaMark = 10;
 
-        $deltaVal = intval($valsLen * $this->pxDeltaMark / ($yEnd - $yBegin));
+        $deltaVal = round($valsLen * $this->pxDeltaMark / ($yEnd - $yBegin));
 
         $color = \imagecolorallocate(
             $handle,
