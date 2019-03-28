@@ -291,7 +291,7 @@ class BaseCharMgr
      * 
      * @param resource $handle Ресурс изображения от библиотеки GD
      * 
-     * @return void
+     * @return bool
      */
     protected function drawLegend($handle)
     {
@@ -323,13 +323,15 @@ class BaseCharMgr
                 $yVals['caption']
             );
 
-            if ($res) {
+            if ($res === false) {
                 $this->errorMsg = $this->fontMgr->getLastError();
                 return false;
             }
 
             $i++;
         }
+
+        return true;
     }
 
     /**

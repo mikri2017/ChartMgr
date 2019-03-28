@@ -146,7 +146,9 @@ class LineChartMgr extends BaseCharMgr
         }
 
         // Рисуем легенду на графике
-        $this->drawLegend($handle);
+        if (!$this->drawLegend($handle)) {
+            return false;
+        }
 
         if ($inFile) {
             \imagepng($handle, $filePath);
