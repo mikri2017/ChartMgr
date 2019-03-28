@@ -19,6 +19,8 @@ class AxisDrawer
 
     /**
      * Массив со значениями RGB - цвет координатной оси
+     * 
+     * @var array
      */
     private $color;
 

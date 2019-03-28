@@ -62,16 +62,6 @@ class LineChartMgr extends BaseCharMgr
             $frameGraphColor
         );
 
-        // Рисуем рамку легенды
-        \imagerectangle(
-            $handle,
-            $this->graphLegendArea[0],
-            $this->graphLegendArea[1],
-            $this->graphLegendArea[2],
-            $this->graphLegendArea[3],
-            $frameGraphColor
-        );
-
         // Рисуем 
         foreach ($this->graphXVals as $key => $value) {
             for ($i = 0; $i < count($this->graphYVals); $i++) {

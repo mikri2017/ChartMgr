@@ -83,6 +83,8 @@ class BaseCharMgr
 
     /**
      * Уровень оси X в пикселях оси Y
+     * 
+     * @var int
      */
     protected $pxXCoordOnY;
 
@@ -102,6 +104,8 @@ class BaseCharMgr
 
     /**
      * Текст последней ошибки
+     * 
+     * @var string
      */
     protected $errorMsg;
 
@@ -244,9 +248,10 @@ class BaseCharMgr
      * Рисует блок данных на графике по переданным координатам
      * 
      * @param resource $handle         Ресурс изображения от библиотеки GD
-     * @param array    $color
-     * @param int      $darkColorDelta
-     * @param array    $blockArea
+     * @param array    $color          Массив из 3-х целочисленных элементов: R, G, B
+     * @param int      $darkColorDelta Сколько отнять от RGB каналов цвета для
+     *                                 прорисовки темной рамки
+     * @param array    $blockArea      Массив 4-х координат области блока
      * 
      * @return bool
      */
@@ -532,4 +537,3 @@ class BaseCharMgr
         return $this->graphYVals;
     }
 }
-
