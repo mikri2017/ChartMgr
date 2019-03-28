@@ -78,8 +78,8 @@ class AxisDrawer
     /**
      * Задаем параметры шрифта координатной оси
      * 
-     * @param array $color     Массив из 3-х целочисленных элементов: R, G, B
      * @param int   $size      Размер шрифта, по умолчанию, 10
+     * @param array $color     Массив из 3-х целочисленных элементов: R, G, B
      * @param array $fontColor Цвет шрифта, используется, если захочется текст
      *                         координатной оси отобразить другим цветом, по
      *                         умолчанию, false - тот же цвет, что и у оси
@@ -88,7 +88,7 @@ class AxisDrawer
      * 
      * @return bool
      */
-    public function setAxisFontAndColorParams($color = array(0, 0, 0), $size = 10,
+    public function setAxisFontAndColorParams($size = 10, $color = array(0, 0, 0),
         $fontColor = false, $angle = 0
     ) {
         if ($fontColor === false) {

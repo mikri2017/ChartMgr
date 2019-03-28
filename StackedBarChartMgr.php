@@ -61,16 +61,6 @@ class StackedBarChartMgr extends BaseCharMgr
             $frameGraphColor
         );
 
-        // Рисуем рамку легенды
-        \imagerectangle(
-            $handle,
-            $this->graphLegendArea[0],
-            $this->graphLegendArea[1],
-            $this->graphLegendArea[2],
-            $this->graphLegendArea[3],
-            $frameGraphColor
-        );
-
         foreach ($this->graphXVals as $key => $value) {
             $arrayOnX = array();
             $arrayUnderX = array();
@@ -129,6 +119,11 @@ class StackedBarChartMgr extends BaseCharMgr
         );
 
         // Рисуем оси X, Y
+        if (!$this->axDrawer->setAxisFontAndColorParams(8)) {
+            $this->errorMsg = $this->axDrawer->getLastError();
+            return false;
+        }
+
         $res = $this->axDrawer->drawHorizontallyTextVals(
             $handle,
             $this->graphArea[0] + $this->graphXStart,
